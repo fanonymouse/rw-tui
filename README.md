@@ -12,6 +12,37 @@ This utility was created as a TUI application for Linux with reference to [RWEve
     - This is the latest fmem kernel module that implements Write function in the existing fmem.
 2. Run `rw-tui` as root privileges
 
+# Building from source
+## Prerequisites
+- CMake 3.11 or higher
+- C++17 compatible compiler
+- Git (for cloning the repository)
+
+## Build steps
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/rw-tui.git
+cd rw-tui
+```
+
+2. Create and enter the build directory:
+```bash
+mkdir build
+cd build
+```
+
+3. Generate build files:
+```bash
+cmake ..
+```
+
+4. Build the project:
+```bash
+cmake --build .
+```
+
+The `rw-tui` executable will be created in the build directory.
+
 # Features supported
 - Output the memory area as a table and change the value
 - Output configuration space MMIO area of PCI device as table
