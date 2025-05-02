@@ -2,6 +2,7 @@
 #include "global.hpp"
 #include "simple_button.hpp"
 #include "utils/hex_string.hpp"
+#include <stdexcept>
 
 PCI::PCI(uint64_t address) {
   mDataView = new DataView(address);
@@ -24,8 +25,13 @@ PCI::PCI(uint64_t address) {
   mPciDeviceSummaryBtn = Button(
       "Summary",
       [&] {
-        getPciConfigSpace(gSelectedDeviceConfigSpace);
-        *gShowPciDeviceSummaryModal = true;
+        try {
+          getPciConfigSpace(gSelectedDeviceConfigSpace);
+          *gShowPciDeviceSummaryModal = true;
+        } catch (const std::runtime_error& e) {
+          *gMessageStr = std::string("Error accessing PCI configuration space: ") + e.what();
+          *gShowMessageModal = true;
+        }
       },
       SimpleButton());
   mReturnBtn = Button(
