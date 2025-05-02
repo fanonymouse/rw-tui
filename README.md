@@ -23,6 +23,7 @@ This utility was created as a TUI application for Linux with reference to [RWEve
 ```bash
 git clone https://github.com/yourusername/rw-tui.git
 cd rw-tui
+git submodule update --init --recursive
 ```
 
 2. Create and enter the build directory:
@@ -42,6 +43,26 @@ cmake --build .
 ```
 
 The `rw-tui` executable will be created in the build directory.
+
+## Execute
+1. Build the fmem kernel module:
+```bash
+cd fmem
+make
+```
+
+2. Load the fmem kernel module:
+```bash
+./run.sh
+```
+
+3. Run rw-tui:
+```bash
+cd ..  # Go back to rw-tui root directory
+./rw-tui
+```
+
+Note: Make sure to run these commands with root privileges.
 
 # Features supported
 - Output the memory area as a table and change the value
