@@ -8,6 +8,6 @@
 
 using namespace std;
 
-string hexString(uint64_t value, uint64_t digits, bool ellipsis = false);
+string hexString(uint64_t value, uint64_t digits, bool ellipsis = false, bool withPrefix = false);
 
 #endif

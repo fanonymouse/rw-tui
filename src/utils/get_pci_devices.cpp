@@ -12,8 +12,8 @@ void getPciDevices(vector<PCI_DEVICE> *pciDevices) {
   for (uint16_t bus = 0; bus < 256; ++bus) {
     for (uint8_t device = 0; device < 32; ++device) {
       for (uint8_t function = 0; function < 8; ++function) {
-        string path = "/sys/bus/pci/devices/0000:" + hexString(bus, 2) + ":" +
-                      hexString(device, 2) + "." + hexString(function, 1);
+        string path = "/sys/bus/pci/devices/0000:" + hexString(bus, 2, false, false) + ":" +
+                      hexString(device, 2, false, false) + "." + hexString(function, 1, false, false);
 
         ifstream file;
         file.open((path + "/vendor").c_str());
