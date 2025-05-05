@@ -1,25 +1,44 @@
 #include <sys/mman.h>
+#include <syslog.h>
+#include <string>
 
 #include "global.hpp"
 #include "pci_device_summary_modal.hpp"
 #include "utils/hex_string.hpp"
 
 PciDeviceSummaryModal::PciDeviceSummaryModal() {
+  openlog("pci-device-summary", LOG_PID|LOG_CONS, LOG_USER);
+  syslog(LOG_INFO, "Entering PciDeviceSummaryModal constructor");
   mCloseBtn = Button(
       " Close ", [&] { closeModal(); }, ButtonOption::Border());
   mContainer = Container::Vertical({
       mCloseBtn,
   });
+  syslog(LOG_INFO, "PciDeviceSummaryModal constructor completed");
+  closelog();
 }
 
 void PciDeviceSummaryModal::closeModal() {
+  openlog("pci-device-summary", LOG_PID|LOG_CONS, LOG_USER);
+  syslog(LOG_INFO, "Entering closeModal");
   *gShowPciDeviceSummaryModal = false;
   mCloseBtn->TakeFocus();
+  syslog(LOG_INFO, "closeModal completed");
+  closelog();
 }
 
 Component PciDeviceSummaryModal::getComponent() {
+  openlog("pci-device-summary", LOG_PID|LOG_CONS, LOG_USER);
+  syslog(LOG_INFO, "Entering getComponent");
   return Renderer(mContainer, [&] {
-    return vbox({
+    syslog(LOG_INFO, "Starting render");
+    try {
+      if (!gSelectedDeviceConfigSpace) {
+        syslog(LOG_ERR, "gSelectedDeviceConfigSpace is null!");
+        throw std::runtime_error("gSelectedDeviceConfigSpace is null");
+      }
+      
+      auto result = vbox({
                hbox({
                    vbox({
                        text(" Vendor ID : 0x" +
@@ -212,5 +231,13 @@ Component PciDeviceSummaryModal::getComponent() {
                }) | center,
            }) |
            size(WIDTH, GREATER_THAN, 40) | border;
+      syslog(LOG_INFO, "Render completed successfully");
+      closelog();
+      return result;
+    } catch (const std::exception& e) {
+      syslog(LOG_ERR, "Exception during render: %s", e.what());
+      closelog();
+      throw;
+    }
   });
 }

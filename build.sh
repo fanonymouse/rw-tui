@@ -14,6 +14,26 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+# Function to cleanup fmem module
+cleanup() {
+    echo -e "${GREEN}Unloading fmem module...${NC}"
+    if lsmod | grep -q "fmem"; then
+        if ! rmmod fmem; then
+            echo -e "${RED}Failed to unload fmem module${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}Successfully unloaded fmem module${NC}"
+    else
+        echo -e "${GREEN}fmem module is not loaded${NC}"
+    fi
+}
+
+# If -c option is provided, just cleanup and exit
+if [ "$1" = "-c" ]; then
+    cleanup
+    exit 0
+fi
+
 echo -e "${GREEN}Building and setting up rw-tui...${NC}"
 
 # Build fmem kernel module

@@ -32,6 +32,25 @@ using namespace ftxui;
 
 const string RW_TUI_VERSION = "v1.0.0";
 
+// RAII wrapper for file descriptor
+class FileDescriptor {
+public:
+    explicit FileDescriptor(const char* path, int flags) {
+        fd = open(path, flags);
+        if (fd == -1) {
+            throw runtime_error("Failed to open " + string(path));
+        }
+    }
+    ~FileDescriptor() {
+        if (fd != -1) {
+            close(fd);
+        }
+    }
+    int get() const { return fd; }
+private:
+    int fd;
+};
+
 int main(int argc, char *argv[]) {
   int c = 0;
   while ((c = getopt(argc, argv, "v")) != -1)
@@ -91,53 +110,57 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int fileDescriptor;
-  if ((fileDescriptor = open(DEV_FMEM, O_RDWR | O_SYNC)) == -1)
-    FATAL;
-  gFileDescriptor = &fileDescriptor;
+  try {
+    FileDescriptor fd(DEV_FMEM, O_RDWR | O_SYNC);
+    int fd_value = fd.get();
+    gFileDescriptor = &fd_value;
 
-  uint64_t baseAddress = (new MCFG())->getMcfgTable().allocation->baseAddress;
-  gBaseAddress = &baseAddress;
+    unique_ptr<MCFG> mcfg(new MCFG());
+    uint64_t baseAddress = mcfg->getMcfgTable().allocation->baseAddress;
+    gBaseAddress = &baseAddress;
 
-  int tabSelected = 0;
-  vector<string> tabValues{
-      " Memory ",
-      " PCI ",
-  };
-  auto tabToggle =
-      Menu(&tabValues, &tabSelected, MenuOption::Horizontal()) | border;
+    int tabSelected = 0;
+    vector<string> tabValues{
+        " Memory ",
+        " PCI ",
+    };
+    auto tabToggle =
+        Menu(&tabValues, &tabSelected, MenuOption::Horizontal()) | border;
 
-  Component tabContainer = Container::Tab(
-      {
-          (new Memory(0x00000000))->getComponent(),
-          (new PCI(*gBaseAddress))->getComponent(),
-      },
-      &tabSelected);
+    Component tabContainer = Container::Tab(
+        {
+            (new Memory(0x00000000))->getComponent(),
+            (new PCI(*gBaseAddress))->getComponent(),
+        },
+        &tabSelected);
 
-  Component container = Container::Vertical({
-      tabToggle,
-      tabContainer,
-  });
-
-  Component renderer = Renderer(container, [&] {
-    return vbox({
-        text("rw-tui " + RW_TUI_VERSION) | bold | hcenter,
-        tabToggle->Render(),
-        tabContainer->Render() | frame | flex,
+    Component container = Container::Vertical({
+        tabToggle,
+        tabContainer,
     });
-  });
 
-  renderer |=
-      Modal((new ChangeValueModal())->getComponent(), gShowChangeValueModal);
-  renderer |= Modal((new PciDeviceSelectModal())->getComponent(),
-                    gShowPciDeviceSelectModal);
-  renderer |= Modal((new PciDeviceSummaryModal())->getComponent(),
-                    gShowPciDeviceSummaryModal);
-  renderer |= Modal((new MessageModal())->getComponent(), gShowMessageModal);
+    Component renderer = Renderer(container, [&] {
+      return vbox({
+          text("rw-tui " + RW_TUI_VERSION) | bold | hcenter,
+          tabToggle->Render(),
+          tabContainer->Render() | frame | flex,
+      });
+    });
 
-  ScreenInteractive screen = ScreenInteractive::Fullscreen();
-  screen.Loop(renderer | size(WIDTH, EQUAL, 80) | size(HEIGHT, EQUAL, 24) |
-              center);
-  close(fileDescriptor);
-  return EXIT_SUCCESS;
+    renderer |=
+        Modal((new ChangeValueModal())->getComponent(), gShowChangeValueModal);
+    renderer |= Modal((new PciDeviceSelectModal())->getComponent(),
+                      gShowPciDeviceSelectModal);
+    renderer |= Modal((new PciDeviceSummaryModal())->getComponent(),
+                      gShowPciDeviceSummaryModal);
+    renderer |= Modal((new MessageModal())->getComponent(), gShowMessageModal);
+
+    ScreenInteractive screen = ScreenInteractive::Fullscreen();
+    screen.Loop(renderer | size(WIDTH, EQUAL, 80) | size(HEIGHT, EQUAL, 24) |
+                center);
+    return EXIT_SUCCESS;
+  } catch (const exception& e) {
+    cerr << "[ERROR] " << e.what() << endl;
+    return EXIT_FAILURE;
+  }
 }

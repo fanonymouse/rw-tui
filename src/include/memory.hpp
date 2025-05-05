@@ -28,6 +28,7 @@ private:
 
 public:
   Memory(uint64_t address);
+  ~Memory();
   Component getComponent();
 };
 
